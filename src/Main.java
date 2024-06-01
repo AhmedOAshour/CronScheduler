@@ -1,11 +1,11 @@
 /*
     TODO Revisit
     do I need to parse Cron Expressions or just time(hours minutes etc) for scheduling frequency
-    single run expected interval meaning? run once after delay?
-    keep scheduler static?
+    single run expected interval meaning? run once after delay? interrupt after interval?
 
     TODO Implementation
     implement own concurrent scheduler instead of pre-made
+        single run expected interval (revisit)
     track and log task metrics/outputs
     testing
  */
@@ -16,26 +16,18 @@
     , separates multiple values
     - defines range
     / defines interval
+
+    function on own thread input timer call's job, recursive on itself
 */
 
 import cron.CronScheduler;
 
 public class Main {
 
-    public static void main(String[] args) throws InterruptedException {
-        CronScheduler.schedule( "jobA","1s", true, SampleJobs::sampleA);
-        CronScheduler.schedule( "jobB","3s", false, SampleJobs::sampleB);
-//        cron.CronScheduler.schedule( "jobC","5s", false, SampleJobs::sampleC);
-
-        System.out.println(CronScheduler.jobs.keySet());
-        System.out.println(CronScheduler.jobs.values());
-
-
-
-        Thread.sleep(5000);
-        cron.CronScheduler.cancel("jobB");
-
-        System.out.println(cron.CronScheduler.jobs.keySet());
-        System.out.println(cron.CronScheduler.jobs.values());
+    public static void main(String[] args) {
+        CronScheduler scheduler = new CronScheduler();
+        scheduler.schedule("JobA", "3s", SampleJobs::sampleA);
+        scheduler.schedule("JobB", "1s", SampleJobs::sampleB);
+        scheduler.schedule("JobC", "5s", SampleJobs::sampleC);
     }
 }
