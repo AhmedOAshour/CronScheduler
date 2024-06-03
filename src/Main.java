@@ -1,11 +1,12 @@
 /*
     TODO Revisit
     do I need to parse Cron Expressions or just time(hours minutes etc) for scheduling frequency
-    single run expected interval meaning? run once after delay? interrupt after interval?
 
     TODO Implementation
     implement own concurrent scheduler instead of pre-made
-        single run expected interval (revisit)
+        DONE Multiple jobs can be running at the same time.
+        single run expected interval: interrupt after interval
+        handle throws
     track and log task metrics/outputs
     testing
  */
@@ -26,8 +27,8 @@ public class Main {
 
     public static void main(String[] args) {
         CronScheduler scheduler = new CronScheduler();
-        scheduler.schedule("JobA", "3s", SampleJobs::sampleA);
-        scheduler.schedule("JobB", "1s", SampleJobs::sampleB);
-        scheduler.schedule("JobC", "5s", SampleJobs::sampleC);
+        scheduler.queueJob("JobA", "3s", SampleJobs::sampleA);
+        scheduler.queueJob("JobB", "1s", SampleJobs::sampleB);
+        scheduler.queueJob("JobC", "5s", SampleJobs::sampleC);
     }
 }

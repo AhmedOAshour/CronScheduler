@@ -1,13 +1,15 @@
 package cron;
 
-public class CronJob implements Runnable, Comparable<CronJob>  {
+import java.util.concurrent.Callable;
+
+public class CronJob implements Comparable<CronJob>  {
 
     private final String jobId;
     private final long runInterval;
     private long scheduledTime;
-    private final Runnable task;
+    private final Callable<Object> task;
 
-    public CronJob(String jobId, String runInterval, Runnable task) {
+    public CronJob(String jobId, String runInterval, Callable<Object> task) {
         if (jobId == null || jobId.isBlank() || task == null) {
             throw new IllegalArgumentException("All fields are required");
         }
@@ -17,12 +19,6 @@ public class CronJob implements Runnable, Comparable<CronJob>  {
         this.setScheduledTime();
     }
 
-    @Override
-    public void run() {
-        task.run();
-    }
-
-    @Override
     public int compareTo(CronJob o) {
         return Long.compare(this.scheduledTime, o.scheduledTime);
     }
@@ -39,7 +35,7 @@ public class CronJob implements Runnable, Comparable<CronJob>  {
         return scheduledTime;
     }
 
-    public Runnable getTask() {
+    public Callable<Object> getTask() {
         return task;
     }
 

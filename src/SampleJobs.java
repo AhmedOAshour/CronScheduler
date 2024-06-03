@@ -1,13 +1,16 @@
 public class SampleJobs {
-    public static void sampleA(){
+    public static int sampleA(){
         System.out.println("Sample A");
+        return 200;
     }
 
-    public static void sampleB(){
+    public static String sampleB(){
         System.out.println("Sample B");
+        return "Sample B";
     }
 
-    public static void sampleC(){
+    public static boolean sampleC(){
         System.out.println("Sample C");
+        return true;
     }
 }
