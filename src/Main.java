@@ -1,13 +1,11 @@
 /*
-    TODO Revisit
-    do I need to parse Cron Expressions or just time(hours minutes etc) for scheduling frequency
-
     TODO Implementation
     implement own concurrent scheduler instead of pre-made
         DONE Multiple jobs can be running at the same time.
         single run expected interval: interrupt after interval
-        handle throws
-    track and log task metrics/outputs
+            Interrupter thread?
+        Done handle throws
+    Done track and log task metrics/outputs
     testing
  */
 

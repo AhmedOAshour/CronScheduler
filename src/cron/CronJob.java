@@ -43,7 +43,7 @@ public class CronJob implements Comparable<CronJob>  {
         this.scheduledTime = System.currentTimeMillis() + runInterval;
     }
 
-    private long parseTime(String time) {
+    public long parseTime(String time) {
         if (time.length()<2 || !Character.isDigit(time.charAt(0)))
             throw new IllegalArgumentException("Invalid interval format");
 

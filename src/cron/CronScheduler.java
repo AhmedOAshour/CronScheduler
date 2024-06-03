@@ -9,37 +9,35 @@ import java.util.concurrent.Callable;
 public class CronScheduler {
     private boolean graceFlag;
     private boolean sleepFlag;
+    private boolean stopFlag;
     private final int gracePeriod = 60000;
     private final Thread schedulerThread;
     private final Map<CronJob, Thread> activeThreads;
     private final PriorityQueue<CronJob> jobs;
+    private final Logger logger;
 
     public CronScheduler() {
-        graceFlag = false;
-        sleepFlag = false;
+        this.graceFlag = false;
+        this.sleepFlag = false;
+        this.stopFlag = false;
         this.schedulerThread = new Thread(this::schedule,"SchedulerThread");
-//        this.threadPool = new ThreadPool();
         this.jobs = new PriorityQueue<>(Comparator.comparing(CronJob::getScheduledTime));
-        activeThreads = new HashMap<>();
-//        this.nextJob = null;
+        this.activeThreads = new HashMap<>();
+        this.logger = new Logger();
     }
 
     private void schedule() {
-        //todo shutdown flag?
-        while (true) {
+        while (!stopFlag) {
             if (jobs.isEmpty()) {
                 try {
                     graceFlag = true;
-//                    System.err.println("No tasks in queue, waiting for job");
                     Thread.sleep(gracePeriod);
-                    System.err.println("No tasks scheduled during grace period.");
+                    System.err.println("No tasks re-queued during grace period.");
                     System.err.println("Terminating program.");
-                    //todo is system exit necessary?
-                    System.exit(0);
+                    stopScheduler();
                 } catch (InterruptedException e) {
-//                    System.err.println("Task scheduled before grace period is up");
-                    //todo reset interrupt flag?
                     Thread.interrupted(); // clear interruption flag
+                    continue;
                 }
             }
 
@@ -55,34 +53,39 @@ public class CronScheduler {
                 continue;
             }
             CronJob job = jobs.poll();
-            Thread thread = new Thread(()->{
-                try {
-                    long startTime = System.currentTimeMillis();
-                    Object jobOutput = job.getTask().call();
-                    System.out.println(job.getJobId()+" Output: "+jobOutput);
-                    long runTime = System.currentTimeMillis() - startTime;
-                    //todo log output and metrics
-                } catch (Exception e) {
-                    System.err.println("Task failed to run, removing it from schedule");
-                    System.out.println(e.getMessage());
-                    return;
-                }
-                finally {
-                    activeThreads.remove(job);
-                }
-                requeueJob(job);
-            },
-                    job.getJobId());
+            Thread thread = createJobThread(job);
             activeThreads.put(job, thread);
             thread.start();
         }
+    }
+
+    private Thread createJobThread(CronJob job) {
+        Thread thread = new Thread(()->{
+            try {
+                long startTime = System.currentTimeMillis();
+                Object jobOutput = job.getTask().call();
+//                System.out.println(job.getJobId()+" Output: "+jobOutput);
+                long runTime = System.currentTimeMillis() - startTime;
+                logger.log(job.getJobId(), runTime, jobOutput.toString());
+            } catch (Exception e) {
+                System.err.println("Task failed to run, removing it from schedule");
+                System.out.println(e.getMessage());
+                return;
+            }
+            finally {
+                activeThreads.remove(job);
+            }
+            requeueJob(job);
+        }, job.getJobId());
+        thread.setDaemon(true);
+        return thread;
     }
 
 
     public void queueJob(String jobId, String runInterval, Callable<Object> task) {
         try {
             CronJob job = new CronJob(jobId, runInterval, task);
-            this.jobs.add(job);
+            jobs.add(job);
         }
         catch (Exception e) {
             System.out.println("Could not create job");
@@ -103,11 +106,16 @@ public class CronScheduler {
 
     private void requeueJob(CronJob job) {
         job.setScheduledTime();
-        this.jobs.add(job);
+        jobs.add(job);
         if (graceFlag) {
             graceFlag = false;
             schedulerThread.interrupt();
         }
+    }
+
+    public void stopScheduler() {
+        stopFlag = true;
+        schedulerThread.interrupt();
     }
 
 }
