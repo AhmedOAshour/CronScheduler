@@ -14,6 +14,9 @@ public class ClassReader {
 
     public Callable<Object> readFunction(String filePath, String fileName, String methodName) {
         filePath = filePath.replace('\\', '/');
+        if (filePath.charAt(filePath.length() - 1) != '\\') {
+            filePath += '\\';
+        }
         compile(filePath + fileName);
         Class<?> clazz = loadClass(filePath, fileName);
         if (clazz != null) {
