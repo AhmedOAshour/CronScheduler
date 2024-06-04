@@ -10,7 +10,7 @@ package main;
     DONE read jobs from file
     DONE track and log task metrics/outputs
     DONE main method (cli)
-    testing
+    DONE testing (basic testing)
     README
  */
 

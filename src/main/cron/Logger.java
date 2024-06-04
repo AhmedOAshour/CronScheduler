@@ -25,8 +25,8 @@ public class Logger {
     }
 
     public String formatMillis(long millis) {
-        if (millis<1) {
-            return "Invalid Time";
+        if (millis<0) {
+            return "0";
         }
         Duration duration = Duration.ofMillis(millis);
         long hours = duration.toHours();
