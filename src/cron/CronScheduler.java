@@ -37,7 +37,7 @@ public class CronScheduler {
                 if (!activeThreads.isEmpty()) {
                     long currentTime = System.currentTimeMillis();
                     for (CronJob job : activeThreads.keySet()) {
-                        if (job.getScheduledTime() + job.getRunInterval() < currentTime) {
+                        if (job.getScheduledTime() + job.getMaxRunTime() < currentTime) {
                             System.err.println(job.getJobId() + " exceeded max runTime, interrupting thread");
                             activeThreads.get(job).interrupt(); // Job needs to be interruptible, can't kill running thread
                         }
