@@ -13,6 +13,7 @@ import java.util.concurrent.Callable;
 public class ClassReader {
 
     public Callable<Object> readFunction(String filePath, String fileName, String methodName) {
+        filePath = filePath.replace('\\', '/');
         compile(filePath + fileName);
         Class<?> clazz = loadClass(filePath, fileName);
         if (clazz != null) {
@@ -41,7 +42,7 @@ public class ClassReader {
 
             classLoader.close();
             return clazz;
-        } catch (ClassNotFoundException | MalformedURLException e) {
+        } catch (ClassNotFoundException | MalformedURLException | NoClassDefFoundError e) {
             System.err.println("Error loading class: " + filePath + fileName);
         } catch (IOException e) {
             System.err.println("Cannot close classLoader manually");
