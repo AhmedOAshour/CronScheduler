@@ -9,15 +9,22 @@
     testing
  */
 
+import cron.ClassReader;
 import cron.CronScheduler;
+
+import java.util.concurrent.Callable;
 
 public class Main {
 
     public static void main(String[] args) {
         CronScheduler scheduler = new CronScheduler();
-        scheduler.queueJob("JobA", "2s", "1s", SampleJobs::sampleA);
-        scheduler.queueJob("JobB", "3s", "5s", SampleJobs::sampleB);
-        scheduler.queueJob("JobC", "3s", "5s", SampleJobs::sampleC);
+        ClassReader classReader = new ClassReader();
+        Callable<Object> callable = classReader.readFunction("D:\\VSCode Projects\\", "SampleJobs.java", "sampleA");
+        Callable<Object> callable1 = classReader.readFunction("D:\\VSCode Projects\\", "SampleJobs.java", "sampleB");
+        Callable<Object> callable2 = classReader.readFunction("D:\\VSCode Projects\\", "SampleJobs.java", "sampleC");
+        scheduler.queueJob("JobA", "1s", "1s", callable);
+        scheduler.queueJob("JobB", "3s", "5s", callable1);
+        scheduler.queueJob("JobC", "3s", "5s", callable2);
 
     }
 }

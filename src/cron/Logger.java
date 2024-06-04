@@ -8,7 +8,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.concurrent.Semaphore;
 
 public class Logger {
-    private Semaphore semaphore;
+    private final Semaphore semaphore;
     private FileWriter writer;
     DateTimeFormatter formatter;
 
