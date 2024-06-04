@@ -1,4 +1,4 @@
-package cron;
+package main.cron;
 
 import java.io.FileWriter;
 import java.io.IOException;
@@ -12,11 +12,11 @@ public class Logger {
     private FileWriter writer;
     DateTimeFormatter formatter;
 
-    public Logger() {
+    public Logger(String fileName) {
         formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
         semaphore = new Semaphore(1);
         try {
-            writer = new FileWriter("scheduler-log.txt", true);
+            writer = new FileWriter(fileName, true);
         }
         catch (IOException e) {
             System.err.println("Could not open file for logging");

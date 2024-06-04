@@ -1,4 +1,4 @@
-package cron;
+package main.cron;
 
 import java.io.IOException;
 import java.util.Comparator;
@@ -13,6 +13,7 @@ public class CronScheduler {
     private boolean sleepFlag;
     private boolean stopFlag;
     private final int gracePeriod = 60000;
+    private long maxTimeToLive;
     private final Thread schedulerThread;
     private final Semaphore semaphore;
     private final Map<CronJob, Thread> activeThreads;
@@ -27,7 +28,8 @@ public class CronScheduler {
         this.semaphore = new Semaphore(1);
         this.jobs = new PriorityQueue<>(Comparator.comparing(CronJob::getScheduledTime));
         this.activeThreads = new HashMap<>();
-        this.logger = new Logger();
+        this.logger = new Logger("scheduler-log.txt");
+        this.maxTimeToLive = 0;
     }
 
     private void schedule() {
@@ -52,10 +54,10 @@ public class CronScheduler {
             if (jobs.isEmpty()) {
                 try {
                     graceFlag = true;
-                    Thread.sleep(gracePeriod);
-                    System.err.println("No tasks re-queued during grace period.");
+                    Thread.sleep(Math.max(gracePeriod, maxTimeToLive));
+                    System.err.println("No tasks re-queued during grace period."); // runaway threads
                     System.err.println("Terminating program.");
-                    stopScheduler();
+                    System.exit(1); // status 1 indicates some error
                 } catch (InterruptedException e) {
                     Thread.interrupted(); // clear interruption flag
                     continue;
@@ -109,10 +111,14 @@ public class CronScheduler {
         try {
             CronJob job = new CronJob(jobId, runInterval, maxRunTime, task);
             jobs.add(job);
+            if (job.getMaxRunTime() > maxTimeToLive) {
+                maxTimeToLive = job.getMaxRunTime();
+            }
         } catch (Exception e) {
             System.out.println("Could not create job");
             return;
         }
+
         if (!schedulerThread.isAlive()) {
             schedulerThread.start();
         }
@@ -124,6 +130,7 @@ public class CronScheduler {
             graceFlag = false;
             schedulerThread.interrupt();
         }
+        System.out.println(jobId + ": Job scheduled");
     }
 
     private void requeueJob(CronJob job) {

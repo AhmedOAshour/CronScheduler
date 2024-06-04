@@ -1,4 +1,4 @@
-package cron;
+package main.cron;
 
 import javax.tools.JavaCompiler;
 import javax.tools.ToolProvider;
@@ -33,6 +33,10 @@ public class ClassReader {
             File fileDirectory = new File(filePath);
             URL url = fileDirectory.toURI().toURL();
             URLClassLoader classLoader = new URLClassLoader(new URL[]{url});
+            if (fileName.length()<6) {
+                System.err.println("Invalid file name: " + fileName);
+                return null;
+            }
             Class<?> clazz = classLoader.loadClass(fileName.substring(0, fileName.length() - 5));
 
             classLoader.close();
