@@ -6,15 +6,17 @@ public class CronJob implements Comparable<CronJob>  {
 
     private final String jobId;
     private final long runInterval;
+    private final long maxRunTime;
     private long scheduledTime;
     private final Callable<Object> task;
 
-    public CronJob(String jobId, String runInterval, Callable<Object> task) {
+    public CronJob(String jobId, String runInterval, String maxRunTime, Callable<Object> task) {
         if (jobId == null || jobId.isBlank() || task == null) {
             throw new IllegalArgumentException("All fields are required");
         }
         this.jobId = jobId;
         this.runInterval = parseTime(runInterval);
+        this.maxRunTime = parseTime(maxRunTime);
         this.task = task;
         this.setScheduledTime();
     }
@@ -41,6 +43,10 @@ public class CronJob implements Comparable<CronJob>  {
 
     public void setScheduledTime() {
         this.scheduledTime = System.currentTimeMillis() + runInterval;
+    }
+
+    public long getMaxRunTime() {
+        return maxRunTime;
     }
 
     public long parseTime(String time) {

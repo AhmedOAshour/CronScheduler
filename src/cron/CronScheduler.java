@@ -1,10 +1,12 @@
 package cron;
 
+import java.io.IOException;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.PriorityQueue;
 import java.util.concurrent.Callable;
+import java.util.concurrent.Semaphore;
 
 public class CronScheduler {
     private boolean graceFlag;
@@ -12,6 +14,7 @@ public class CronScheduler {
     private boolean stopFlag;
     private final int gracePeriod = 60000;
     private final Thread schedulerThread;
+    private final Semaphore semaphore;
     private final Map<CronJob, Thread> activeThreads;
     private final PriorityQueue<CronJob> jobs;
     private final Logger logger;
@@ -20,7 +23,8 @@ public class CronScheduler {
         this.graceFlag = false;
         this.sleepFlag = false;
         this.stopFlag = false;
-        this.schedulerThread = new Thread(this::schedule,"SchedulerThread");
+        this.schedulerThread = new Thread(this::schedule, "SchedulerThread");
+        this.semaphore = new Semaphore(1);
         this.jobs = new PriorityQueue<>(Comparator.comparing(CronJob::getScheduledTime));
         this.activeThreads = new HashMap<>();
         this.logger = new Logger();
@@ -28,6 +32,23 @@ public class CronScheduler {
 
     private void schedule() {
         while (!stopFlag) {
+            try {
+                semaphore.acquire();
+                if (!activeThreads.isEmpty()) {
+                    long currentTime = System.currentTimeMillis();
+                    for (CronJob job : activeThreads.keySet()) {
+                        if (job.getScheduledTime() + job.getRunInterval() < currentTime) {
+                            System.err.println(job.getJobId() + " exceeded max runTime, interrupting thread");
+                            activeThreads.get(job).interrupt(); // Job needs to be interruptible, can't kill running thread
+                        }
+                    }
+                }
+            } catch (InterruptedException e) {
+                continue;
+            } finally {
+                semaphore.release();
+            }
+
             if (jobs.isEmpty()) {
                 try {
                     graceFlag = true;
@@ -54,13 +75,15 @@ public class CronScheduler {
             }
             CronJob job = jobs.poll();
             Thread thread = createJobThread(job);
+            semaphore.acquireUninterruptibly();
             activeThreads.put(job, thread);
+            semaphore.release();
             thread.start();
         }
     }
 
     private Thread createJobThread(CronJob job) {
-        Thread thread = new Thread(()->{
+        Thread thread = new Thread(() -> {
             try {
                 long startTime = System.currentTimeMillis();
                 Object jobOutput = job.getTask().call();
@@ -71,9 +94,10 @@ public class CronScheduler {
                 System.err.println("Task failed to run, removing it from schedule");
                 System.out.println(e.getMessage());
                 return;
-            }
-            finally {
+            } finally {
+                semaphore.acquireUninterruptibly();
                 activeThreads.remove(job);
+                semaphore.release();
             }
             requeueJob(job);
         }, job.getJobId());
@@ -81,13 +105,11 @@ public class CronScheduler {
         return thread;
     }
 
-
-    public void queueJob(String jobId, String runInterval, Callable<Object> task) {
+    public void queueJob(String jobId, String runInterval, String maxRunTime, Callable<Object> task) {
         try {
-            CronJob job = new CronJob(jobId, runInterval, task);
+            CronJob job = new CronJob(jobId, runInterval, maxRunTime, task);
             jobs.add(job);
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             System.out.println("Could not create job");
             return;
         }
@@ -116,6 +138,11 @@ public class CronScheduler {
     public void stopScheduler() {
         stopFlag = true;
         schedulerThread.interrupt();
+        try {
+            logger.close();
+        } catch (IOException e) {
+            System.err.println("Failed to close logger");
+        }
     }
 
 }

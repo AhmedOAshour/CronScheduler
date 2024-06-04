@@ -54,4 +54,8 @@ public class Logger {
             semaphore.release();
         }
     }
+
+    public void close() throws IOException {
+        writer.close();
+    }
 }
