@@ -25,6 +25,9 @@ public class Logger {
     }
 
     public String formatMillis(long millis) {
+        if (millis<1) {
+            return "Invalid Time";
+        }
         Duration duration = Duration.ofMillis(millis);
         long hours = duration.toHours();
         long minutes = duration.toMinutesPart();
@@ -34,7 +37,7 @@ public class Logger {
     }
 
     public void log(String jobID, long runTime, String message) {
-        String output = String.format("JobId: %s --- DateTime: %s --- Runtime: %ss --- Output: %s\n",
+        String output = String.format("JobId: %s --- DateTime: %s --- Runtime: %s --- Output: %s\n",
                 jobID, formatter.format(LocalDateTime.now()), formatMillis(runTime), message);
         try {
             semaphore.acquire();

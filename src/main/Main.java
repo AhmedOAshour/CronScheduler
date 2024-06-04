@@ -23,12 +23,13 @@ import java.util.concurrent.Callable;
 public class Main {
 
     public static void main(String[] args) {
-        CronScheduler scheduler = new CronScheduler();
+        CronScheduler scheduler = new CronScheduler("scheduler-log.txt");
         ClassReader classReader = new ClassReader();
-//        Callable<Object> callable = classReader.readFunction("D:\\VSCode Projects\\", "SampleJobs.java", "sampleA");
-//        Callable<Object> callable1 = classReader.readFunction("D:\\VSCode Projects\\", "SampleJobs.java", "sampleB");
-//        Callable<Object> callable2 = classReader.readFunction("D:\\VSCode Projects\\", "SampleJobs.java", "sampleC");
-//        scheduler.queueJob("JobA", "1s", "1s", callable);
+
+//        Callable<Object> callable = classReader.readFunction("D:\\", "SampleJobs.java", "sampleA");
+//        Callable<Object> callable1 = classReader.readFunction("D:\\", "SampleJobs.java", "sampleB");
+//        Callable<Object> callable2 = classReader.readFunction("D:\\", "SampleJobs.java", "sampleC");
+//        scheduler.queueJob("JobA", "5s", "2s", callable);
 //        scheduler.queueJob("JobB", "3s", "5s", callable1);
 //        scheduler.queueJob("JobC", "3s", "5s", callable2);
 
@@ -40,11 +41,9 @@ public class Main {
             String command = sc.nextLine().trim();
             if (command.equals("1")) {
                 System.out.println("Enter file path, Ex: <C:\\folder\\>");
+                System.out.println("File must be outside of project directory.");
                 String filePath = sc.nextLine().trim();
-                if (filePath.length()>1 && filePath.charAt(filePath.length() - 1) != '\\') {
-                    filePath += "\\";
-                }
-                else {
+                if (filePath.length()<=1) {
                     System.err.println("Invalid file path");
                     continue;
                 }

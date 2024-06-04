@@ -20,7 +20,7 @@ public class CronScheduler {
     private final PriorityQueue<CronJob> jobs;
     private final Logger logger;
 
-    public CronScheduler() {
+    public CronScheduler(String logFileName) {
         this.graceFlag = false;
         this.sleepFlag = false;
         this.stopFlag = false;
@@ -28,7 +28,7 @@ public class CronScheduler {
         this.semaphore = new Semaphore(1);
         this.jobs = new PriorityQueue<>(Comparator.comparing(CronJob::getScheduledTime));
         this.activeThreads = new HashMap<>();
-        this.logger = new Logger("scheduler-log.txt");
+        this.logger = new Logger(logFileName);
         this.maxTimeToLive = 0;
     }
 
@@ -46,6 +46,7 @@ public class CronScheduler {
                     }
                 }
             } catch (InterruptedException e) {
+                Thread.interrupted();
                 continue;
             } finally {
                 semaphore.release();
@@ -71,9 +72,8 @@ public class CronScheduler {
                     Thread.sleep(sleepTime);
                 }
             } catch (InterruptedException e) {
-                System.err.println("Scheduled earlier job");
+//                System.err.println("Scheduled earlier job");
                 Thread.interrupted();
-                continue;
             }
             CronJob job = jobs.poll();
             Thread thread = createJobThread(job);
@@ -94,7 +94,7 @@ public class CronScheduler {
                 logger.log(job.getJobId(), runTime, jobOutput.toString());
             } catch (Exception e) {
                 System.err.println("Task failed to run, removing it from schedule");
-                System.out.println(e.getMessage());
+                System.err.println("Message: "+e.getMessage());
                 return;
             } finally {
                 semaphore.acquireUninterruptibly();
@@ -150,6 +150,14 @@ public class CronScheduler {
         } catch (IOException e) {
             System.err.println("Failed to close logger");
         }
+    }
+
+    public void interruptActiveThreads() {
+        semaphore.acquireUninterruptibly();
+        for (Thread thread : activeThreads.values()) {
+            thread.interrupt();
+        }
+        semaphore.release();
     }
 
 }
